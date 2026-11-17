@@ -1,0 +1,15 @@
+.aswin-tip { background: #fff8e6; border-left: 4px solid #ffc93c; padding: 10px 12px; margin: 6px 0 14px; }
+.aswin-field { margin: 0 0 18px; }
+.aswin-field > label { display: block; font-weight: 600; margin-bottom: 6px; }
+.aswin-field .aswin-inline { display: inline-flex; gap: 6px; align-items: center; font-weight: 400; margin-top: 8px; }
+.aswin-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.aswin-preview:empty { display: none; }
+.aswin-thumb { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 80px; height: 80px; border-radius: 8px; overflow: hidden; background: #f3eee5; border: 1px solid #ddd; cursor: move; }
+.aswin-thumb img { width: 80px; height: 80px; object-fit: cover; display: block; }
+.aswin-file { padding: 0 12px; font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aswin-x { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .7); color: #fff; cursor: pointer; line-height: 18px; padding: 0; }
+.aswin-clear { color: #b32d2e; margin-left: 6px; }
+.aswin-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .aswin-cols { grid-template-columns: 1fr; } }
+.column-aswin_thumb { width: 64px; }
+.column-menu_order { width: 70px; }
