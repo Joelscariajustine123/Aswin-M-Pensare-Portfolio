@@ -63,7 +63,8 @@ add_action( 'init', function () {
 		'rewrite'       => array( 'slug' => 'brands', 'with_front' => false ),
 		'menu_icon'     => 'dashicons-awards',
 		'menu_position' => 6,
-		'supports'      => array( 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ),
+		// Order is set with the "Priority" field in the Brand details box (stored in menu_order).
+		'supports'      => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
 	) );
 } );
 
@@ -315,8 +316,23 @@ function aswin_work_details_box( $post ) {
 function aswin_brand_box( $post ) {
 	wp_nonce_field( 'aswin_save', 'aswin_nonce' );
 	echo '<p class="aswin-tip">Upload the brand <strong>Logo</strong> in the right sidebar (transparent PNG or SVG works best). Without a logo the brand name is shown as text. The main editor is the description on the brand’s own page; works linked to this brand (Works → Project details → Client) are listed there automatically.</p>';
+	$prio = (int) $post->menu_order;
+	echo '<div class="aswin-field"><label for="aswin_priority">Priority (optional)</label><input type="number" min="1" step="1" style="width:120px" id="aswin_priority" name="aswin_priority" placeholder="e.g. 1" value="' . ( $prio > 0 ? $prio : '' ) . '">';
+	echo '<p class="description"><strong>1, 2, 3</strong> = the three brands shown on the homepage, in that order. Brands with a priority always come before brands without one. Leave empty if the order doesn’t matter.</p></div>';
 	echo '<div class="aswin-field"><label for="_aswin_link">Website (optional)</label><input type="url" class="widefat" id="_aswin_link" name="_aswin_link" placeholder="https://" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_link', true ) ) . '"></div>';
 }
+
+/** Save the brand Priority into menu_order (0 = no priority). */
+add_filter( 'wp_insert_post_data', function ( $data, $postarr ) {
+	if ( 'aswin_brand' !== $data['post_type'] || ! isset( $_POST['aswin_priority'], $_POST['aswin_nonce'] ) ) {
+		return $data;
+	}
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['aswin_nonce'] ) ), 'aswin_save' ) ) {
+		return $data;
+	}
+	$data['menu_order'] = max( 0, (int) $_POST['aswin_priority'] );
+	return $data;
+}, 10, 2 );
 
 add_action( 'save_post', function ( $post_id, $post ) {
 	if ( ! isset( $_POST['aswin_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['aswin_nonce'] ) ), 'aswin_save' ) ) {
@@ -382,7 +398,7 @@ add_filter( 'gettext', function ( $t, $text, $domain ) {
 
 /* ---------- Admin list columns ---------- */
 foreach ( array( 'aswin_work', 'aswin_brand' ) as $pt ) {
-	add_filter( "manage_{$pt}_posts_columns", function ( $c ) {
+	add_filter( "manage_{$pt}_posts_columns", function ( $c ) use ( $pt ) {
 		$new = array();
 		foreach ( $c as $k => $v ) {
 			if ( 'title' === $k ) {
@@ -390,15 +406,24 @@ foreach ( array( 'aswin_work', 'aswin_brand' ) as $pt ) {
 			}
 			$new[ $k ] = $v;
 		}
-		$new['menu_order'] = 'Order';
+		$new['menu_order'] = 'aswin_brand' === $pt ? 'Priority' : 'Order';
 		unset( $new['date'] );
 		return $new;
 	} );
-	add_action( "manage_{$pt}_posts_custom_column", function ( $col, $id ) {
+	add_action( "manage_{$pt}_posts_custom_column", function ( $col, $id ) use ( $pt ) {
 		if ( 'aswin_thumb' === $col ) {
 			echo get_the_post_thumbnail( $id, array( 56, 56 ), array( 'style' => 'width:56px;height:56px;object-fit:contain;border-radius:6px;background:#f3eee5' ) ) ?: '<span style="display:inline-block;width:56px;height:56px;border-radius:6px;background:#f3eee5"></span>';
 		} elseif ( 'menu_order' === $col ) {
-			echo (int) get_post_field( 'menu_order', $id );
+			$o = (int) get_post_field( 'menu_order', $id );
+			if ( 'aswin_brand' === $pt ) {
+				static $home = null;
+				if ( null === $home ) {
+					$home = get_posts( array( 'post_type' => 'aswin_brand', 'post_status' => 'publish', 'posts_per_page' => 3, 'fields' => 'ids', 'orderby' => array( 'menu_order' => 'ASC', 'title' => 'ASC' ), 'suppress_filters' => false ) );
+				}
+				echo ( $o > 0 ? '<strong>' . $o . '</strong>' : '—' ) . ( in_array( (int) $id, array_map( 'intval', $home ), true ) ? ' <span style="color:#ff4f1f">· on homepage</span>' : '' ); // phpcs:ignore
+			} else {
+				echo (int) $o;
+			}
 		}
 	}, 10, 2 );
 	add_filter( "manage_edit-{$pt}_sortable_columns", function ( $c ) {
@@ -413,6 +438,20 @@ add_action( 'pre_get_posts', function ( $q ) {
 		$q->set( 'orderby', array( 'menu_order' => 'ASC', 'date' => 'DESC' ) );
 	}
 } );
+
+/** Brands everywhere (front end and admin list): prioritised brands first (1, 2, 3…), then the rest A–Z. */
+add_filter( 'posts_orderby', function ( $orderby, $q ) {
+	global $wpdb;
+	$pt = $q->get( 'post_type' );
+	if ( 'aswin_brand' !== $pt || $q->get( 'aswin_raw_order' ) ) {
+		return $orderby;
+	}
+	$requested = $q->get( 'orderby' );
+	if ( is_admin() && $requested && ! in_array( $requested, array( 'menu_order', array( 'menu_order' => 'ASC', 'date' => 'DESC' ) ), true ) && ! is_array( $requested ) ) {
+		return $orderby; // admin clicked another column (e.g. Title)
+	}
+	return "CASE WHEN {$wpdb->posts}.menu_order > 0 THEN 0 ELSE 1 END ASC, {$wpdb->posts}.menu_order ASC, {$wpdb->posts}.post_title ASC";
+}, 10, 2 );
 
 /** Category filter dropdown on the Works list. */
 add_action( 'restrict_manage_posts', function ( $pt ) {

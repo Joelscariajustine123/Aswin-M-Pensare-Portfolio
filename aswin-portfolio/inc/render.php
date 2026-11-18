@@ -416,7 +416,7 @@ class Aswin_Render {
 
 	/** Brand logo wall. $link: 'page' | 'website' | 'none'. */
 	public function brands_wall( $posts, $o = array() ) {
-		$o    = wp_parse_args( $o, array( 'columns' => 'auto', 'grayscale' => true, 'link' => 'page', 'names' => false ) );
+		$o    = wp_parse_args( $o, array( 'columns' => 'auto', 'grayscale' => false, 'link' => 'page', 'names' => false ) );
 		$cols = 'auto' === $o['columns'] ? '' : ' cols-' . (int) $o['columns'];
 		$h    = '<div class="logo-wall' . esc_attr( $cols ) . ( $o['grayscale'] ? ' is-gray' : '' ) . ( $o['names'] ? ' with-names' : '' ) . ' reveal">';
 		foreach ( $posts as $p ) {

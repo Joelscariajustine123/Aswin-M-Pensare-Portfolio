@@ -180,7 +180,7 @@ class Aswin_Brands_Widget extends Aswin_Widget {
 		$this->add_control( 'columns', array( 'label' => 'Columns (desktop)', 'type' => Controls_Manager::SELECT, 'default' => '3', 'options' => array( 'auto' => 'Auto', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6' ) ) );
 		$this->add_control( 'link', array( 'label' => 'Clicking a logo opens', 'type' => Controls_Manager::SELECT, 'default' => 'page', 'options' => array( 'page' => 'Brand page', 'website' => 'Brand website', 'none' => 'Nothing' ) ) );
 		$this->add_control( 'names', array( 'label' => 'Show brand name under logo', 'type' => Controls_Manager::SWITCHER, 'default' => 'yes' ) );
-		$this->add_control( 'grayscale', array( 'label' => 'Greyscale until hover', 'type' => Controls_Manager::SWITCHER, 'default' => 'yes' ) );
+		$this->add_control( 'grayscale', array( 'label' => 'Greyscale until hover', 'type' => Controls_Manager::SWITCHER, 'default' => '' ) );
 		$this->add_control( 'view_more', array( 'label' => 'View more button', 'type' => Controls_Manager::SELECT, 'default' => 'always', 'separator' => 'before', 'options' => array( 'always' => 'Always', 'auto' => 'Only when there are more brands', 'hide' => 'Hide' ) ) );
 		$this->add_control( 'view_more_label', array( 'label' => 'Button text', 'type' => Controls_Manager::TEXT, 'default' => 'View all brands', 'condition' => array( 'view_more!' => 'hide' ) ) );
 		$this->add_control( 'empty_text', array( 'label' => 'Text when no brands', 'type' => Controls_Manager::TEXT, 'default' => 'Brand list coming soon.', 'label_block' => true ) );
