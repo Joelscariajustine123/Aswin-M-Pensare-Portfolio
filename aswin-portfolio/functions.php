@@ -6,7 +6,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ASWIN_VER', '2.6.2' );
+define( 'ASWIN_VER', '2.7.2' );
 
 require_once __DIR__ . '/inc/content-types.php';
 require_once __DIR__ . '/inc/render.php';

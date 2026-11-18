@@ -20,6 +20,7 @@ function aswin_designs() {
 	return array(
 		'card'      => 'Cards (image grid)',
 		'phone'     => 'Phone mockups (Instagram / social)',
+		'showcase'  => 'Showcase cards (full image + caption)',
 		'list'      => 'Article list (numbered rows)',
 		'feature'   => 'Feature mosaic (big hero tile)',
 		'newsprint' => 'Newspaper clippings',
@@ -33,7 +34,7 @@ function aswin_design_for( $terms ) {
 		return 'cards';
 	}
 	$s = get_term_meta( $terms[0]->term_id, 'aswin_style', true );
-	return in_array( $s, array( 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
+	return in_array( $s, array( 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
 }
 
 /** URL of a category's section page (Elementor page if linked, else category archive). */
@@ -224,6 +225,28 @@ class Aswin_Render {
 		return $h . '</ol>';
 	}
 
+	/** Showcase cards: the whole image framed (never cropped), caption underneath. */
+	public function design_showcase( $posts, $columns = 3 ) {
+		$h = '<div class="d-showcase cols-' . (int) $columns . '">';
+		foreach ( array_values( $posts ) as $i => $p ) {
+			$id    = $p->ID;
+			$media = $this->work_media( $id, 'large' );
+			$desc  = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
+			$role  = get_post_meta( $id, '_aswin_role', true );
+			$meta  = $this->meta_line( $id );
+			$label = implode( ' · ', array_filter( array( $role, $meta ) ) );
+			$h    .= '<a class="ds-card reveal" href="' . esc_url( get_permalink( $id ) ) . '">';
+			$h    .= '<div class="ds-frame">' . ( $media ? $media : '<span class="ds-ph">' . esc_html( get_the_title( $id ) ) . '</span>' ) . '</div>';
+			$h    .= '<div class="ds-cap">';
+			$h    .= $label ? '<span class="ds-meta">' . esc_html( $label ) . '</span>' : '';
+			$h    .= '<h3>' . esc_html( get_the_title( $id ) ) . '</h3>';
+			$h    .= $desc ? '<p>' . esc_html( $desc ) . '</p>' : '';
+			$h    .= '<span class="ds-link">View work <span aria-hidden="true">→</span></span>';
+			$h    .= '</div></a>';
+		}
+		return $h . '</div>';
+	}
+
 	/** Campaigns / PR: feature mosaic with captions over images. */
 	public function design_feature( $posts ) {
 		$h = '<div class="d-feature">';
@@ -317,6 +340,8 @@ class Aswin_Render {
 			'design'       => 'cards',
 		) );
 		switch ( $o['design'] ) {
+			case 'showcase':
+				return $this->design_showcase( $posts, $o['columns'] );
 			case 'list':
 				return $this->design_list( $posts );
 			case 'feature':
