@@ -339,7 +339,7 @@ a.logo-cell { color: inherit; }
 .entry figure img { border-radius: 12px; }
 .work-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(14px, 2vw, 24px); padding-bottom: 60px; }
 .work-gallery a { display: block; border-radius: 14px; overflow: hidden; background: var(--paper-2); }
-.work-gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+.work-gallery img { width: 100%; height: auto; display: block; transition: transform .5s; }
 .work-gallery a:hover img { transform: scale(1.03); }
 .work-gallery a:first-child:nth-last-child(odd) { grid-column: 1 / -1; }
 .work-pdf { padding-bottom: 60px; }
@@ -651,4 +651,97 @@ body .e-con.section.page-body { --padding-top: 0; }
 	.logo-wall .logo-cell { padding: 6px; border-radius: 10px; gap: 4px; }
 	.logo-wall .logo-cell em { font-size: 10px; }
 	.logo-wall .logo-cell:hover { transform: translateY(-3px); }
+}
+
+/* ---------- Phone scene (Social media) — matches the reference mockup ----------
+   One fixed stage (1 : 1.09). All sizes are in stage units (cqw), so the card and the
+   big version on the work page are the same composition, just scaled.
+   Stage map (% of stage width): phone 35.5–64.5, posts row top 41 / height 44,
+   left post 9.5–38.5 (tucks under phone), right post 64.5–93.5. */
+.d-scene { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 2.4vw, 32px); align-items: stretch; }
+.d-scene.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.d-scene.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.psc-card { display: flex; flex-direction: column; height: 100%; text-decoration: none; color: inherit; background: #fff; border: 1px solid rgba(21, 20, 18, .1); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 2px rgba(21, 20, 18, .04), 0 8px 24px -12px rgba(21, 20, 18, .12); transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease; }
+.psc-card:hover { transform: translateY(-4px); border-color: rgba(21, 20, 18, .18); box-shadow: 0 2px 4px rgba(21, 20, 18, .05), 0 20px 40px -18px rgba(21, 20, 18, .28); }
+.psc-card:hover .ds-cap h3, .psc-card:hover .ds-link { color: var(--accent); }
+.psc-card:hover .ds-link span { transform: translateX(4px); }
+
+.psc-scene { position: relative; aspect-ratio: 1 / 1.09; overflow: hidden; display: flex; justify-content: center; background: radial-gradient(90% 70% at 55% 30%, #f7fbfe 0%, #e4f0f8 40%, #c5ddef 100%); }
+.psc-scene.is-big { aspect-ratio: 1 / 1.09; max-width: 760px; margin: 0 auto; border-radius: 22px; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -36px rgba(21, 20, 18, .45); }
+.psc-stage { position: relative; height: 100%; aspect-ratio: 1 / 1.09; container-type: inline-size; }
+
+/* 3D step the phone stands on */
+.psc-plinth { position: absolute; z-index: 1; left: -40cqw; width: 106cqw; bottom: 0; height: 14cqw; background: linear-gradient(180deg, #d9dde0 0%, #c3c8cc 100%); }
+.psc-plinth::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 22cqw; background: linear-gradient(100deg, #e7eaec 0%, #f4f5f6 70%, #eceff1 100%); clip-path: polygon(0 0, 92% 0, 100% 100%, 0 100%); }
+.psc-plinth::after { content: ""; position: absolute; top: 0; right: -6cqw; width: 6cqw; height: 100%; background: linear-gradient(180deg, #cfd4d8, #b9bfc4); clip-path: polygon(0 0, 0 100%, 100% 100%, 0 -158%); }
+
+/* Phone */
+.psc-phone { position: absolute; z-index: 3; left: 35.5cqw; top: 25cqw; width: 29cqw; height: 70cqw; padding: 1.3cqw; border-radius: 5cqw; background: #1b1b1e; box-shadow: inset 0 0 0 .35cqw #3a3a3e, 1.5cqw 3cqw 5cqw -1.5cqw rgba(15, 30, 50, .4); transition: transform .4s cubic-bezier(.2, .7, .2, 1); }
+.psc-island { position: absolute; top: 2.4cqw; left: 50%; width: 9cqw; height: 2.3cqw; transform: translateX(-50%); border-radius: 99px; background: #000; }
+.psc-screen { width: 100%; height: 100%; border-radius: 3.9cqw; overflow: hidden; background: #fff; display: flex; flex-direction: column; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #111; }
+.psc-status { flex: none; height: 5.4cqw; display: flex; justify-content: space-between; align-items: center; padding: 1.2cqw 2.4cqw 0 3cqw; font-size: 1.6cqw; }
+.psc-status .ph-sys { transform: scale(.55); transform-origin: right center; }
+.psc-profile { flex: none; height: 9.3cqw; display: flex; align-items: center; gap: 1.2cqw; padding: 0 1.8cqw; font-size: 1.55cqw; line-height: 1.2; }
+.psc-profile b { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.psc-avatar { flex: none; width: 5.2cqw; height: 5.2cqw; border-radius: 50%; overflow: hidden; padding: .3cqw; background: conic-gradient(from 200deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75); }
+.psc-scene .psc-avatar img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; background: #fff; display: block; }
+/* cover post — exact same band as the side posts */
+.psc-post { flex: none; background: #fff; display: flex; justify-content: center; }
+.psc-scene .psc-post img, .psc-scene .psc-post video { width: 100%; height: auto; max-height: 48cqw; object-fit: contain; display: block; }
+.psc-post .ph-ph { width: 100%; height: 40cqw; aspect-ratio: auto; font-size: 2.6cqw; }
+.psc-strip { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .3cqw; padding-top: .3cqw; overflow: hidden; }
+.psc-strip span { background: #eceef0; overflow: hidden; }
+.psc-scene .psc-strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.psc-nav { flex: none; height: 4.6cqw; display: flex; justify-content: space-around; align-items: center; padding: 0 .8cqw; border-top: 1px solid #eee; background: #fff; }
+.psc-nav svg { width: 2.4cqw; height: 2.4cqw; fill: none; stroke: #111; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.psc-nav .ph-avatar { width: 2.4cqw; height: 2.4cqw; box-shadow: none; }
+
+/* Side posts: flat, same row as the phone's post */
+.psc-side { position: absolute; z-index: 2; top: 63cqw; transform: translateY(-50%); width: auto; height: auto; max-width: 29cqw; overflow: hidden; background: #fff; line-height: 0; box-shadow: 0 1.6cqw 3.2cqw -1.4cqw rgba(15, 30, 50, .35); transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+.psc-scene .psc-side img { width: auto; height: auto; max-width: 29cqw; max-height: 56cqw; object-fit: contain; display: block; }
+.psc-left { right: 61.5cqw; }
+.psc-right { left: 64.5cqw; z-index: 4; }
+
+/* Brand logo, top right */
+.psc-brand { position: absolute; z-index: 5; top: 3cqw; right: 4cqw; max-width: 34cqw; display: flex; align-items: center; }
+.psc-brand img { height: 7.5cqw !important; max-height: 7.5cqw !important; width: auto !important; max-width: 100% !important; object-fit: contain; display: block; border-radius: 1cqw; }
+
+/* Hover (cards) */
+.psc-card:hover .psc-phone { transform: translateY(-1.2cqw); }
+.psc-card:hover .psc-left { transform: translateY(-50%) translateX(-1.6cqw); }
+.psc-card:hover .psc-right { transform: translateY(-50%) translateX(1.6cqw); }
+
+.work-scene { margin-bottom: clamp(40px, 6vw, 70px); }
+
+@media (max-width: 1024px) { .d-scene, .d-scene[class*="cols-"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+	.d-scene, .d-scene[class*="cols-"] { grid-template-columns: 1fr; }
+	.psc-scene.is-big { border-radius: 16px; }
+}
+
+.work-gallery { align-items: start; }
+
+/* Phone shows ONE image (the cover), centred; other images on both sides, 2 layers max */
+.psc-post { flex: 1 1 auto; min-height: 0; align-items: center; justify-content: center; background: #fff; overflow: hidden; }
+.psc-scene .psc-post img, .psc-scene .psc-post video { width: 100%; height: auto; max-height: 100%; object-fit: contain; }
+.psc-strip { display: none; }
+.psc-side.d1 { z-index: 1; opacity: .95; }
+.psc-side.d1 img { max-height: 46cqw; max-width: 24cqw; }
+.psc-left.d1 { right: 75cqw; transform: translateY(-50%) scale(.9); }
+.psc-right.d1 { left: 78cqw; transform: translateY(-50%) scale(.9); }
+.psc-card:hover .psc-left.d1 { transform: translateY(-50%) translateX(-2.6cqw) scale(.9); }
+.psc-card:hover .psc-right.d1 { transform: translateY(-50%) translateX(2.6cqw) scale(.9); }
+
+/* Hover any image in the scene: it enlarges and comes in front of everything */
+.psc-left { transform-origin: left center; }
+.psc-right { transform-origin: right center; }
+.psc-scene .psc-stage .psc-side { transition: transform .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s ease; }
+.psc-scene .psc-stage .psc-side.psc-left:hover,
+.psc-scene .psc-stage .psc-side.psc-right:hover { z-index: 20; transform: translateY(-50%) scale(1.4); box-shadow: 0 3cqw 7cqw -1cqw rgba(15, 30, 50, .55); opacity: 1; }
+.psc-scene .psc-stage .psc-side.d1.psc-left:hover,
+.psc-scene .psc-stage .psc-side.d1.psc-right:hover { transform: translateY(-50%) scale(1.5); }
+.psc-scene .psc-stage .psc-phone:hover { z-index: 20; transform: scale(1.12); box-shadow: inset 0 0 0 .35cqw #3a3a3e, 2cqw 4cqw 7cqw -1.5cqw rgba(15, 30, 50, .5); }
+@media (hover: none) {
+	.psc-scene .psc-stage .psc-side:hover, .psc-scene .psc-stage .psc-phone:hover { transform: none; }
+	.psc-scene .psc-stage .psc-side.psc-left:hover, .psc-scene .psc-stage .psc-side.psc-right:hover { transform: translateY(-50%); }
 }

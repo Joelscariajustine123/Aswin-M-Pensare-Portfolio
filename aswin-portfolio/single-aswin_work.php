@@ -53,7 +53,12 @@ while ( have_posts() ) :
 			<?php endif; ?>
 		</header>
 
-		<?php if ( 'phone' === $style ) : ?>
+		<?php if ( 'scene' === $style ) : ?>
+			<div class="wrap work-scene reveal"><?php echo $r->scene_html( get_post(), true ); // phpcs:ignore ?></div>
+			<?php if ( trim( get_the_content() ) ) : ?>
+				<div class="wrap"><div class="entry reveal"><?php the_content(); ?></div></div>
+			<?php endif; ?>
+		<?php elseif ( 'phone' === $style ) : ?>
 			<div class="wrap work-body has-phone">
 				<div class="work-phone reveal"><?php echo $r->phone_html( get_post(), true, 'brandname', '', false ); // phpcs:ignore ?></div>
 				<div class="entry reveal"><?php the_content(); ?></div>
@@ -69,7 +74,7 @@ while ( have_posts() ) :
 
 		<?php
 		// Gallery: for phone works show every image; otherwise skip the cover already shown above.
-		$gallery = 'phone' === $style ? $images : array_slice( $images, ( has_post_thumbnail() && ! $has_vid ) ? 1 : 0 );
+		$gallery = in_array( $style, array( 'phone', 'scene' ), true ) ? $images : array_slice( $images, ( has_post_thumbnail() && ! $has_vid ) ? 1 : 0 );
 		if ( $gallery ) :
 			?>
 			<section class="wrap work-gallery" aria-label="Images">
@@ -125,7 +130,7 @@ while ( have_posts() ) :
 						<div class="chapter reveal"><b>+</b> Keep reading</div>
 						<h2 class="section-title reveal">More <em><?php echo esc_html( $cat->name ); ?></em></h2>
 					</div>
-					<?php echo $r->works_grid( $more, array( 'columns' => 3, 'terms' => array( $cat ) ) ); // phpcs:ignore ?>
+					<?php echo $r->works_grid( $more, array( 'columns' => 3, 'terms' => array( $cat ), 'design' => aswin_design_for( array( $cat ) ) ) ); // phpcs:ignore ?>
 					<?php echo $r->view_more( $back, 'All ' . $cat->name ); // phpcs:ignore ?>
 				</section>
 				<?php

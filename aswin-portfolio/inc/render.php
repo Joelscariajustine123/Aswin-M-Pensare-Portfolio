@@ -5,14 +5,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
-/** 'phone' if the work is in any phone-mockup category, else 'card' (decides the single-page layout). */
+/** Single-page layout for a work: 'scene', 'phone' or 'card' (from its categories' Display style). */
 function aswin_work_style( $post_id ) {
+	$styles = array();
 	foreach ( (array) wp_get_post_terms( $post_id, 'aswin_work_cat' ) as $t ) {
-		if ( 'phone' === get_term_meta( $t->term_id, 'aswin_style', true ) ) {
-			return 'phone';
-		}
+		$styles[] = get_term_meta( $t->term_id, 'aswin_style', true );
 	}
-	return 'card';
+	if ( in_array( 'scene', $styles, true ) ) {
+		return 'scene';
+	}
+	return in_array( 'phone', $styles, true ) ? 'phone' : 'card';
 }
 
 /** Available section designs (term meta aswin_style). */
@@ -20,6 +22,7 @@ function aswin_designs() {
 	return array(
 		'card'      => 'Cards (image grid)',
 		'phone'     => 'Phone mockups (Instagram / social)',
+		'scene'     => 'Phone scene (phone + side posts mockup)',
 		'showcase'  => 'Showcase cards (full image + caption)',
 		'list'      => 'Article list (numbered rows)',
 		'feature'   => 'Feature mosaic (big hero tile)',
@@ -34,7 +37,7 @@ function aswin_design_for( $terms ) {
 		return 'cards';
 	}
 	$s = get_term_meta( $terms[0]->term_id, 'aswin_style', true );
-	return in_array( $s, array( 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
+	return in_array( $s, array( 'scene', 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
 }
 
 /** URL of a category's section page (Elementor page if linked, else category archive). */
@@ -225,6 +228,61 @@ class Aswin_Render {
 		return $h . '</ol>';
 	}
 
+	/**
+	 * Phone scene: gradient backdrop + plinth, phone (cover image) in the middle,
+	 * up to two extra posts (from "More images") fanned out either side, brand logo on top.
+	 * $big = true for the work's own page.
+	 */
+	public function scene_html( $p, $big = false ) {
+		$id      = $p->ID;
+		$cover   = (int) get_post_thumbnail_id( $id );
+		$video   = (int) get_post_meta( $id, '_aswin_video', true );
+		$extras  = array_values( array_diff( array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_gallery', true ) ) ) ), array( $cover ) ) );
+		$brand   = (int) get_post_meta( $id, '_aswin_brand', true );
+		$brand   = $brand && 'publish' === get_post_status( $brand ) ? $brand : 0;
+		$handle  = get_post_meta( $id, '_aswin_ig_handle', true );
+		$name    = $brand ? get_the_title( $brand ) : ( $handle ? $handle : get_the_title( $id ) );
+		$size    = $big ? 'large' : 'medium_large';
+
+		$screen = $this->work_media( $id, $size );
+		if ( ! $screen ) {
+			$screen = '<div class="ph-ph">' . esc_html( get_the_title( $id ) ) . '</div>';
+		}
+
+		$has_logo = $brand && has_post_thumbnail( $brand );
+		$h        = '<div class="psc-scene' . ( $big ? ' is-big' : '' ) . ( $extras ? ' has-sides' : '' ) . '"><div class="psc-stage">';
+		if ( $has_logo ) {
+			$h .= '<div class="psc-brand">' . get_the_post_thumbnail( $brand, 'medium', array( 'alt' => $name, 'loading' => 'lazy' ) ) . '</div>';
+		}
+		$h .= '<div class="psc-plinth" aria-hidden="true"></div>';
+		// Other images alternate left / right; a 3rd and 4th sit one layer behind, further out.
+		foreach ( array_slice( $extras, 0, 4 ) as $i => $img ) {
+			$side = 0 === $i % 2 ? 'left' : 'right';
+			$h   .= '<div class="psc-side psc-' . $side . ' d' . (int) floor( $i / 2 ) . '">' . wp_get_attachment_image( $img, $size, false, array( 'loading' => 'lazy' ) ) . '</div>';
+		}
+		// Phone: status bar + profile header, the cover post (lined up with the side posts), a thumbnail strip, nav.
+		$h .= '<div class="psc-phone"><div class="psc-screen">';
+		$h .= '<div class="psc-status"><b>12:08</b><span class="ph-sys"><i></i><i></i><i></i></span></div>';
+		$h .= '<div class="psc-profile"><span class="psc-avatar">' . ( $has_logo ? get_the_post_thumbnail( $brand, 'thumbnail', array( 'alt' => '' ) ) : '' ) . '</span><b>' . esc_html( $name ) . '</b></div>';
+		$h .= '<div class="psc-post">' . $screen . '</div>';
+		$h .= '<div class="psc-nav">' . $this->svg_icon( 'home' ) . $this->svg_icon( 'search' ) . $this->svg_icon( 'plus' ) . $this->svg_icon( 'reels' ) . '<span class="ph-avatar"></span></div>';
+		$h .= '</div><span class="psc-island"></span></div>';
+		return $h . '</div></div>';
+	}
+
+	/** Social media section: phone-scene cards with caption. */
+	public function design_scene( $posts, $columns = 3 ) {
+		$h = '<div class="d-scene cols-' . (int) $columns . '">';
+		foreach ( array_values( $posts ) as $p ) {
+			$id    = $p->ID;
+			$desc  = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
+			$label = implode( ' · ', array_filter( array( get_post_meta( $id, '_aswin_role', true ), $this->meta_line( $id ) ) ) );
+			$h    .= '<a class="psc-card reveal" href="' . esc_url( get_permalink( $id ) ) . '">' . $this->scene_html( $p );
+			$h    .= '<div class="ds-cap">' . ( $label ? '<span class="ds-meta">' . esc_html( $label ) . '</span>' : '' ) . '<h3>' . esc_html( get_the_title( $id ) ) . '</h3>' . ( $desc ? '<p>' . esc_html( $desc ) . '</p>' : '' ) . '<span class="ds-link">View work <span aria-hidden="true">→</span></span></div></a>';
+		}
+		return $h . '</div>';
+	}
+
 	/** Showcase cards: the whole image framed (never cropped), caption underneath. */
 	public function design_showcase( $posts, $columns = 3 ) {
 		$h = '<div class="d-showcase cols-' . (int) $columns . '">';
@@ -340,6 +398,8 @@ class Aswin_Render {
 			'design'       => 'cards',
 		) );
 		switch ( $o['design'] ) {
+			case 'scene':
+				return $this->design_scene( $posts, $o['columns'] );
 			case 'showcase':
 				return $this->design_showcase( $posts, $o['columns'] );
 			case 'list':
