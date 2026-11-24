@@ -368,10 +368,153 @@ class Aswin_Render {
 			$media = $this->work_media( $id, 0 === $i ? 'aswin-wide' : 'aswin-card' );
 			$desc  = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
 			$meta  = $this->meta_line( $id );
-			$h    .= '<a class="df-item reveal' . ( $media ? '' : ' no-img' ) . '" href="' . esc_url( get_permalink( $id ) ) . '">';
-			$h    .= '<div class="df-media">' . $media . '</div>';
+			$imgs  = aswin_work_images( $id );
+			$films = array_values( array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_videos', true ) ) ) ) );
+			$multi = count( $imgs ) + count( $films ) > 1;
+			$board = (bool) get_post_meta( $id, '_aswin_tagline', true );
+			$h    .= '<a class="df-item reveal' . ( $media ? '' : ' no-img' ) . ( $board ? ' is-board' : ( $multi ? ' is-campaign' : '' ) ) . '" href="' . esc_url( get_permalink( $id ) ) . '">';
+			if ( $board ) {
+				// Card = scaled-down preview of the showcase page.
+				$h .= '<div class="df-media df-board">' . $this->campaign_board( $p, true ) . '</div>';
+				if ( $films ) {
+					$h .= '<span class="df-watch" role="link" tabindex="0" data-go="' . esc_url( get_permalink( $id ) . '#films' ) . '"><i aria-hidden="true">▶</i> Watch the films</span>';
+				}
+			} elseif ( $multi ) {
+				// The whole campaign inside the card: creatives + films, each shown whole on a blurred backdrop of itself.
+				$size = 0 === $i ? 'large' : 'medium_large';
+				$h   .= '<div class="df-media df-show" data-lap-slides>';
+				$n    = 0;
+				foreach ( $imgs as $img ) {
+					$url = wp_get_attachment_image_url( $img, $size );
+					$tag = wp_get_attachment_image( $img, $size, false, array( 'loading' => 'lazy', 'class' => 'df-fg' ) );
+					if ( $n > 1 ) {
+						$tag = str_replace( array( ' src=', ' srcset=' ), array( ' data-src=', ' data-srcset=' ), $tag );
+					}
+					$h .= '<div class="lap-slide' . ( 0 === $n ? ' is-on' : '' ) . '"><span class="df-bg"' . ( $n > 1 ? ' data-bg' : '' ) . ' style="background-image:url(' . esc_url( $url ) . ')"></span>' . $tag . '</div>';
+					$n++;
+				}
+				foreach ( $films as $v ) {
+					$src    = wp_get_attachment_url( $v );
+					$poster = (int) get_post_meta( $v, '_aswin_poster', true );
+					$purl   = $poster ? wp_get_attachment_image_url( $poster, 'medium_large' ) : '';
+					if ( ! $src ) {
+						continue;
+					}
+					$h .= '<div class="lap-slide is-film' . ( 0 === $n ? ' is-on' : '' ) . '"><span class="df-bg" style="' . ( $purl ? 'background-image:url(' . esc_url( $purl ) . ')' : '' ) . '"></span>'
+						. '<video class="df-fg" data-film-src="' . esc_url( $src ) . '"' . ( $purl ? ' poster="' . esc_url( $purl ) . '"' : '' ) . ' muted loop playsinline preload="none"></video><span class="df-play" aria-hidden="true">▶ Film</span></div>';
+					$n++;
+				}
+				$h .= '</div>';
+				$bits = array();
+				if ( $imgs ) {
+					$bits[] = count( $imgs ) . ( 1 === count( $imgs ) ? ' creative' : ' creatives' );
+				}
+				if ( $films ) {
+					$bits[] = count( $films ) . ( 1 === count( $films ) ? ' film' : ' films' );
+				}
+				$h .= '<span class="df-count">' . esc_html( implode( ' · ', $bits ) ) . '</span>';
+				// Story-style progress bars (one per slide; film slides run longer).
+				$h .= '<div class="lap-dots df-bars">';
+				for ( $k = 0; $k < $n; $k++ ) {
+					$h .= '<span role="button" tabindex="0" class="lap-dot' . ( $k >= count( $imgs ) ? ' is-filmbar' : '' ) . ( 0 === $k ? ' is-on' : '' ) . '" aria-label="Slide ' . ( $k + 1 ) . '"></span>';
+				}
+				$h .= '</div>';
+				$tagline = get_post_meta( $id, '_aswin_tagline', true );
+				if ( $tagline ) {
+					$h .= '<span class="df-tagline" aria-hidden="true">' . esc_html( $tagline ) . '</span>';
+				}
+				if ( $films ) {
+					// Not a nested <a>: main.js follows data-go.
+					$h .= '<span class="df-watch" role="link" tabindex="0" data-go="' . esc_url( get_permalink( $id ) . '#films' ) . '"><i aria-hidden="true">▶</i> Watch the films</span>';
+				}
+			} else {
+				$h .= '<div class="df-media">' . $media . '</div>';
+			}
 			$h    .= '<div class="df-cap">' . ( $meta ? '<span class="df-meta">' . esc_html( $meta ) . '</span>' : '' ) . '<h3>' . esc_html( get_the_title( $id ) ) . '</h3>' . ( $desc ? '<p>' . esc_html( $desc ) . '</p>' : '' ) . '</div>';
 			$h    .= '<span class="df-arrow" aria-hidden="true">↗</span></a>';
+		}
+		return $h . '</div>';
+	}
+
+	/**
+	 * Campaign showcase board (matches the showcase mockup): headline + leaf, laptop on a table,
+	 * social series (3 tall tiles), two wide feature videos, podcast row (3 tiles).
+	 * $mini = true renders a static preview for cards (no links/buttons inside).
+	 */
+	public function campaign_board( $p, $mini = false ) {
+		$id       = $p->ID;
+		$cover    = (int) get_post_thumbnail_id( $id );
+		$series   = array_values( array_diff( aswin_work_images( $id ), array( $cover ) ) );
+		$films    = array_values( array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_videos', true ) ) ) ) );
+		$feature  = array_values( array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_feature_videos', true ) ) ) ) );
+		if ( ! $feature ) {
+			$feature = array_slice( $films, 0, 2 ); // until dedicated feature videos are added
+		}
+		$headline = get_post_meta( $id, '_aswin_headline', true );
+		$headline = $headline ? $headline : get_post_meta( $id, '_aswin_tagline', true );
+		$s_label  = get_post_meta( $id, '_aswin_series_label', true );
+		$f_label  = get_post_meta( $id, '_aswin_films_label', true );
+		$desc     = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
+		$size     = $mini ? 'medium_large' : 'large';
+
+		$video_tile = function ( $v, $cls, $inner ) use ( $mini ) {
+			$src = wp_get_attachment_url( $v );
+			return $mini
+				? '<span class="' . $cls . '">' . $inner . '</span>'
+				: '<button type="button" class="' . $cls . '" data-video="' . esc_url( $src ) . '" aria-label="Play: ' . esc_attr( get_the_title( $v ) ) . '">' . $inner . '</button>';
+		};
+		$poster = function ( $v ) use ( $size ) {
+			$pid = (int) get_post_meta( $v, '_aswin_poster', true );
+			return $pid ? wp_get_attachment_image( $pid, $size, false, array( 'loading' => 'lazy', 'alt' => '' ) ) : '';
+		};
+
+		$h  = '<div class="cmp-board' . ( $mini ? ' is-mini' : ' is-page' ) . '">';
+		// Scenery: bokeh, wooden table, leaves.
+		$h .= '<span class="cb-bokeh" aria-hidden="true"></span><span class="cb-table" aria-hidden="true"></span>';
+		foreach ( array( 'l1', 'l2', 'l3', 'l4', 'l5' ) as $l ) {
+			$h .= '<svg class="cb-dleaf ' . $l . '" viewBox="0 0 100 60" aria-hidden="true"><path d="M4 56C14 22 46 4 96 4 90 40 58 60 4 56z"/></svg>';
+		}
+
+		// Intro.
+		$h .= '<div class="cb-intro"><p class="cb-kicker">Campaign showcase</p>';
+		$tag = $mini ? 'p' : 'h1';
+		$h .= '<' . $tag . ' class="cb-title">' . esc_html( $headline ) . '</' . $tag . '>';
+		$h .= '<svg class="cb-leaf" viewBox="0 0 120 110" aria-hidden="true"><path d="M60 104C40 70 44 30 86 6c14 34 6 76-26 98z" fill="#4aa52a"/><path d="M60 104C66 70 74 40 84 14" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M56 104C34 96 10 74 8 44c30 4 46 30 48 60z" fill="#7cc843"/><path d="M56 104C44 84 30 66 14 50" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
+		$h .= '<span class="cb-rule"></span>' . ( $desc ? '<p class="cb-desc">' . esc_html( $desc ) . '</p>' : '' ) . '</div>';
+
+		// Laptop.
+		if ( $cover ) {
+			$h .= '<div class="cb-lid"><div class="cb-screen">' . wp_get_attachment_image( $cover, $size, false, array( 'loading' => $mini ? 'lazy' : 'eager', 'alt' => '' ) ) . '</div></div>';
+			$h .= '<div class="cb-deck" aria-hidden="true"><span class="cb-keys"></span><span class="cb-pad"></span></div>';
+		}
+
+		// Social series.
+		if ( $series ) {
+			$h .= '<span class="cb-pill cb-pill-s">' . esc_html( $s_label ? $s_label : 'Social media series' ) . '</span><div class="cb-posts"' . ( $mini ? '' : ' id="series"' ) . '>';
+			foreach ( array_slice( $series, 0, 3 ) as $img ) {
+				$im = wp_get_attachment_image( $img, $size, false, array( 'loading' => 'lazy' ) );
+				$h .= $mini ? '<span class="cb-post">' . $im . '</span>' : '<a class="cb-post" href="' . esc_url( wp_get_attachment_image_url( $img, 'full' ) ) . '" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="board-' . (int) $id . '">' . $im . '</a>';
+			}
+			$h .= '</div>';
+		}
+
+		// Feature videos (two wide tiles).
+		if ( $feature ) {
+			$h .= '<div class="cb-feature"' . ( $mini ? '' : ' id="films"' ) . '>';
+			foreach ( array_slice( $feature, 0, 2 ) as $k => $v ) {
+				$inner = $poster( $v ) . '<span class="cb-ftxt"><b>' . esc_html( get_the_title( $v ) ) . '</b>' . ( 0 === $k ? '<i>Campaign video</i>' : '' ) . '</span><span class="cb-fplay"></span>';
+				$h    .= $video_tile( $v, 'cb-ftile', $inner );
+			}
+			$h .= '</div>';
+		}
+
+		// Podcast row.
+		if ( $films ) {
+			$h .= '<span class="cb-pill cb-pill-f">' . esc_html( $f_label ? $f_label : 'Campaign films' ) . '</span><div class="cb-pods">';
+			foreach ( array_slice( $films, 0, 3 ) as $v ) {
+				$h .= $video_tile( $v, 'cb-pod', $poster( $v ) . '<span class="cb-play" aria-hidden="true"></span>' );
+			}
+			$h .= '</div>';
 		}
 		return $h . '</div>';
 	}

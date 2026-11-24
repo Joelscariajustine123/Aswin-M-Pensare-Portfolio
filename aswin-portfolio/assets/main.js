@@ -53,12 +53,29 @@
 		var i = 0, timer = null;
 		var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		function load(s) {
-			var im = s && s.querySelector('img[data-src]');
-			if (!im) return;
-			if (im.dataset.srcset) im.srcset = im.dataset.srcset;
-			im.src = im.dataset.src;
-			im.removeAttribute('data-src');
-			im.removeAttribute('data-srcset');
+			if (!s) return;
+			var im = s.querySelector('img[data-src]');
+			if (im) {
+				if (im.dataset.srcset) im.srcset = im.dataset.srcset;
+				im.src = im.dataset.src;
+				im.removeAttribute('data-src');
+				im.removeAttribute('data-srcset');
+			}
+			var bg = s.querySelector('[data-bg]');
+			if (bg) bg.removeAttribute('data-bg');
+		}
+		function films(active) {
+			slides.forEach(function (s) {
+				var v = s.querySelector('video[data-film-src]');
+				if (!v) return;
+				if (s === active && !still) {
+					if (!v.src) v.src = v.dataset.filmSrc;
+					var p = v.play();
+					if (p && p.catch) p.catch(function () {});
+				} else if (!v.paused) {
+					v.pause();
+				}
+			});
 		}
 		function show(k) {
 			i = (k + slides.length) % slides.length;
@@ -66,11 +83,15 @@
 			load(slides[(i + 1) % slides.length]);
 			slides.forEach(function (s, j) { s.classList.toggle('is-on', j === i); });
 			dots.forEach(function (d, j) { d.classList.toggle('is-on', j === i); });
+			films(slides[i]);
 		}
-		function play() { stop(); if (!still) timer = setInterval(function () { show(i + 1); }, 3500); }
-		function stop() { if (timer) clearInterval(timer); }
+		// Films get longer on screen than still slides.
+		function delay() { return slides[i] && slides[i].classList.contains('is-film') ? 9000 : 3500; }
+		function play() { stop(); if (!still) timer = setTimeout(function tick() { show(i + 1); timer = setTimeout(tick, delay()); }, delay()); }
+		function stop() { if (timer) clearTimeout(timer); }
 		// Controls sit inside card links: change slide without following the link.
 		function bind(el, fn) {
+			if (!el) return;
 			el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); fn(); play(); });
 			el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); fn(); play(); } });
 		}
@@ -80,6 +101,48 @@
 		lap.addEventListener('mouseenter', stop);
 		lap.addEventListener('mouseleave', play);
 		setTimeout(play, n * 700); // stagger multiple sliders
+	});
+
+	// Links inside card links (e.g. "Watch the films").
+	document.addEventListener('click', function (e) {
+		var go = e.target.closest ? e.target.closest('[data-go]') : null;
+		if (!go) return;
+		e.preventDefault(); e.stopPropagation();
+		window.location.href = go.getAttribute('data-go');
+	}, true);
+	document.addEventListener('keydown', function (e) {
+		if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-go]')) {
+			e.preventDefault(); window.location.href = e.target.getAttribute('data-go');
+		}
+	});
+
+	// Showcase board films: open in a full-screen player.
+	document.addEventListener('click', function (e) {
+		var t = e.target.closest ? e.target.closest('.cb-reel[data-video]') : null;
+		if (!t) return;
+		e.preventDefault();
+		var ov = document.createElement('div');
+		ov.className = 'cb-modal';
+		ov.innerHTML = '<button type="button" class="cb-close" aria-label="Close">×</button><video controls autoplay playsinline></video>';
+		ov.querySelector('video').src = t.getAttribute('data-video');
+		function close() { ov.querySelector('video').pause(); ov.remove(); document.removeEventListener('keydown', esc); }
+		function esc(k) { if (k.key === 'Escape') close(); }
+		ov.addEventListener('click', function (k) { if (k.target === ov || k.target.classList.contains('cb-close')) close(); });
+		document.addEventListener('keydown', esc);
+		document.body.appendChild(ov);
+	});
+
+	// Campaign page reels: big play button, one film at a time.
+	document.querySelectorAll('.cmp-reel-frame').forEach(function (fr) {
+		var v = fr.querySelector('video'), b = fr.querySelector('.cmp-reel-play');
+		b.addEventListener('click', function () {
+			document.querySelectorAll('.cmp-reel-frame video').forEach(function (o) { if (o !== v) o.pause(); });
+			v.controls = true;
+			fr.classList.add('is-playing');
+			v.play();
+		});
+		v.addEventListener('pause', function () { if (v.currentTime === 0 || v.ended) fr.classList.remove('is-playing'); });
+		v.addEventListener('ended', function () { fr.classList.remove('is-playing'); v.controls = false; });
 	});
 
 	var els = document.querySelectorAll('.reveal');

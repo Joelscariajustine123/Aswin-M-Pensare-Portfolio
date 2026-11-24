@@ -229,6 +229,12 @@ function aswin_work_fields() {
 		'_aswin_ig_likes'   => 'text',
 		'_aswin_ig_date'    => 'text',
 		'_aswin_brand'      => 'int',
+		'_aswin_videos'     => 'ids',
+		'_aswin_feature_videos' => 'ids',
+		'_aswin_tagline'    => 'text',
+		'_aswin_headline'   => 'text',
+		'_aswin_series_label' => 'text',
+		'_aswin_films_label'  => 'text',
 		'_aswin_year'       => 'text',
 		'_aswin_role'       => 'text',
 	);
@@ -283,6 +289,8 @@ function aswin_work_media_box( $post ) {
 	echo '<p class="aswin-tip">The <strong>Cover image</strong> (sidebar) shows on the homepage and category pages. <strong>Short description</strong> appears under the title. The main editor above is the full write-up on this work’s own page (brief, idea, result…). Pick categories in the sidebar.</p>';
 	aswin_media_field( '_aswin_video', 'Video (optional)', $m( '_aswin_video' ), 'video', false, 'MP4/WebM. Plays silently on loop in place of the cover image — great for reels.' );
 	aswin_media_field( '_aswin_gallery', 'More images (optional)', $m( '_aswin_gallery' ), 'image', true, 'Shown as a gallery on the work page (click to enlarge). Drag to reorder.' );
+	aswin_media_field( '_aswin_feature_videos', 'Feature videos (optional, 2)', $m( '_aswin_feature_videos' ), 'video', true, 'The two wide video tiles on a campaign showcase (e.g. campaign film, treatment video). Empty = the first two campaign videos are used.' );
+	aswin_media_field( '_aswin_videos', 'Campaign videos (optional)', $m( '_aswin_videos' ), 'video', true, 'Shown as “The films” on the work page, each with its own player. Drag to reorder.' );
 	aswin_media_field( '_aswin_pdf', 'PDF file (optional)', $m( '_aswin_pdf' ), 'application/pdf', false, 'e.g. an article or press release. Shown inside the work page with a download button.' );
 	echo '<div class="aswin-field"><label for="_aswin_link">Link (optional)</label><input type="url" class="widefat" id="_aswin_link" name="_aswin_link" placeholder="https://" value="' . esc_attr( $m( '_aswin_link' ) ) . '">';
 	echo '<label class="aswin-inline"><input type="checkbox" name="_aswin_link_new" value="1"' . checked( $m( '_aswin_link_new' ), '1', false ) . '> Open in new tab</label>';
@@ -311,6 +319,14 @@ function aswin_work_details_box( $post ) {
 	echo '</select><p class="description">Shown on the work page, and the work appears on that brand’s page. <a href="' . esc_url( admin_url( 'post-new.php?post_type=aswin_brand' ) ) . '" target="_blank">Add a brand</a></p></div>';
 	echo '<div class="aswin-field"><label for="_aswin_year">Year</label><input type="text" class="widefat" name="_aswin_year" id="_aswin_year" placeholder="2024" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_year', true ) ) . '"></div>';
 	echo '<div class="aswin-field"><label for="_aswin_role">My role</label><input type="text" class="widefat" name="_aswin_role" id="_aswin_role" placeholder="Copy, concept" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_role', true ) ) . '"></div>';
+	echo '<div class="aswin-field"><label for="_aswin_tagline">Campaign line (optional)</label><input type="text" class="widefat" name="_aswin_tagline" id="_aswin_tagline" placeholder="The Way of Ayurveda" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_tagline', true ) ) . '"><p class="description">When set, the work page becomes a campaign showcase board and the card shows its preview.</p></div>';
+	foreach ( array(
+		'_aswin_headline'     => array( 'Showcase headline', 'National Ayurveda Day 2026', 'Big green title on the board. Empty = campaign line.' ),
+		'_aswin_series_label' => array( 'Posts label', 'Thematic social media series', '' ),
+		'_aswin_films_label'  => array( 'Videos label', 'Podcast series', '' ),
+	) as $k => $f ) {
+		echo '<div class="aswin-field"><label for="' . esc_attr( $k ) . '">' . esc_html( $f[0] ) . '</label><input type="text" class="widefat" name="' . esc_attr( $k ) . '" id="' . esc_attr( $k ) . '" placeholder="' . esc_attr( $f[1] ) . '" value="' . esc_attr( get_post_meta( $post->ID, $k, true ) ) . '">' . ( $f[2] ? '<p class="description">' . esc_html( $f[2] ) . '</p>' : '' ) . '</div>';
+	}
 }
 
 function aswin_brand_box( $post ) {

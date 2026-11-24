@@ -25,6 +25,9 @@ while ( have_posts() ) :
 	$has_vid = (bool) get_post_meta( $id, '_aswin_video', true );
 	?>
 	<article class="work-single style-<?php echo esc_attr( $style ); ?>">
+		<?php if ( get_post_meta( $id, '_aswin_tagline', true ) ) : ?>
+			<?php include __DIR__ . '/parts/campaign.php'; ?>
+		<?php else : ?>
 		<header class="wrap single-hero">
 			<nav class="crumbs" aria-label="Breadcrumb">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span>/</span>
@@ -82,12 +85,40 @@ while ( have_posts() ) :
 		$gallery = in_array( $style, array( 'phone', 'scene', 'laptop' ), true ) ? $images : array_slice( $images, ( has_post_thumbnail() && ! $has_vid ) ? 1 : 0 );
 		if ( $gallery ) :
 			?>
-			<section class="wrap work-gallery" aria-label="Images">
+			<section class="wrap work-gallery n-<?php echo (int) min( count( $gallery ), 4 ); ?>" aria-label="Images">
 				<?php foreach ( $gallery as $img ) : ?>
 					<a class="reveal" href="<?php echo esc_url( wp_get_attachment_image_url( $img, 'full' ) ); ?>" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="work-<?php echo (int) $id; ?>">
 						<?php echo wp_get_attachment_image( $img, 'large', false, array( 'loading' => 'lazy' ) ); ?>
 					</a>
 				<?php endforeach; ?>
+			</section>
+		<?php endif; ?>
+
+		<?php
+		// Campaign videos ("The films").
+		$films = array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_videos', true ) ) ) );
+		if ( $films ) :
+			?>
+			<section class="wrap work-films" aria-label="Videos">
+				<div class="section-head">
+					<div class="chapter reveal"><b><?php echo count( $films ); ?></b> <?php echo 1 === count( $films ) ? 'Film' : 'Films'; ?></div>
+					<h2 class="section-title reveal">The <em>films</em></h2>
+				</div>
+				<div class="films-grid n-<?php echo (int) min( count( $films ), 3 ); ?>">
+					<?php
+					foreach ( $films as $v ) :
+						$src    = wp_get_attachment_url( $v );
+						$poster = (int) get_post_meta( $v, '_aswin_poster', true );
+						if ( ! $src ) {
+							continue;
+						}
+						?>
+						<figure class="film reveal">
+							<video src="<?php echo esc_url( $src ); ?>"<?php echo $poster ? ' poster="' . esc_url( wp_get_attachment_image_url( $poster, 'large' ) ) . '"' : ''; ?> controls playsinline preload="none"></video>
+							<?php if ( $t = get_the_title( $v ) ) : ?><figcaption><?php echo esc_html( $t ); ?></figcaption><?php endif; ?>
+						</figure>
+					<?php endforeach; ?>
+				</div>
 			</section>
 		<?php endif; ?>
 
@@ -98,6 +129,7 @@ while ( have_posts() ) :
 				</object>
 			</section>
 		<?php endif; ?>
+		<?php endif; // campaign layout ?>
 
 		<?php
 		// Prev / next within the primary category.
