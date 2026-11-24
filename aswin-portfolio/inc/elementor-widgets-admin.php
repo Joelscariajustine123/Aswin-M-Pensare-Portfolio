@@ -44,6 +44,7 @@ class Aswin_Work_Showcase_Widget extends Aswin_Widget {
 			'options'     => array(
 				'auto'      => 'Automatic (category’s Display style)',
 				'cards'     => 'Cards / phone mockups grid',
+				'laptop'    => 'Laptop screen (decks / brand guidelines)',
 				'scene'     => 'Phone scene (phone + side posts mockup)',
 				'showcase'  => 'Showcase cards (full image + caption)',
 				'list'      => 'Article list (numbered rows)',

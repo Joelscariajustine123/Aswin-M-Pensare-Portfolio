@@ -11,6 +11,9 @@ function aswin_work_style( $post_id ) {
 	foreach ( (array) wp_get_post_terms( $post_id, 'aswin_work_cat' ) as $t ) {
 		$styles[] = get_term_meta( $t->term_id, 'aswin_style', true );
 	}
+	if ( in_array( 'laptop', $styles, true ) ) {
+		return 'laptop';
+	}
 	if ( in_array( 'scene', $styles, true ) ) {
 		return 'scene';
 	}
@@ -22,6 +25,7 @@ function aswin_designs() {
 	return array(
 		'card'      => 'Cards (image grid)',
 		'phone'     => 'Phone mockups (Instagram / social)',
+		'laptop'    => 'Laptop screen (decks / brand guidelines)',
 		'scene'     => 'Phone scene (phone + side posts mockup)',
 		'showcase'  => 'Showcase cards (full image + caption)',
 		'list'      => 'Article list (numbered rows)',
@@ -37,7 +41,7 @@ function aswin_design_for( $terms ) {
 		return 'cards';
 	}
 	$s = get_term_meta( $terms[0]->term_id, 'aswin_style', true );
-	return in_array( $s, array( 'scene', 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
+	return in_array( $s, array( 'laptop', 'scene', 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
 }
 
 /** URL of a category's section page (Elementor page if linked, else category archive). */
@@ -270,6 +274,57 @@ class Aswin_Render {
 		return $h . '</div></div>';
 	}
 
+	/**
+	 * Laptop mockup. Card: cover slide. $big (work page): every slide as a slideshow.
+	 * Slides are shown whole (contain), never cropped.
+	 */
+	public function laptop_html( $p, $big = false ) {
+		$id     = $p->ID;
+		$slides = aswin_work_images( $id );
+		$multi  = count( $slides ) > 1;
+		$tag    = $big ? 'button type="button"' : 'span role="button" tabindex="0"'; // cards are links: no nested <button>
+		$etag   = $big ? 'button' : 'span';
+		$h      = '<div class="lap-scene' . ( $big ? ' is-big' : '' ) . '"><div class="lap"' . ( $multi ? ' data-lap-slides' : '' ) . '>';
+		$h     .= '<div class="lap-lid"><span class="lap-cam"></span><div class="lap-screen">';
+		if ( ! $slides ) {
+			$h .= '<div class="lap-slide is-on"><div class="ph-ph">' . esc_html( get_the_title( $id ) ) . '</div></div>';
+		}
+		foreach ( $slides as $i => $img ) {
+			$tag_img = wp_get_attachment_image( $img, $big ? 'large' : 'medium_large', false, array( 'loading' => 0 === $i ? 'eager' : 'lazy' ) );
+			if ( $i > 1 ) {
+				// Deferred: main.js swaps data-src/srcset in just before the slide is shown.
+				$tag_img = str_replace( array( ' src=', ' srcset=' ), array( ' data-src=', ' data-srcset=' ), $tag_img );
+			}
+			$h .= '<div class="lap-slide' . ( 0 === $i ? ' is-on' : '' ) . '">' . $tag_img . '</div>';
+		}
+		if ( $multi ) {
+			$h .= '<' . $tag . ' class="lap-nav lap-prev" aria-label="Previous slide">‹</' . $etag . '><' . $tag . ' class="lap-nav lap-next" aria-label="Next slide">›</' . $etag . '>';
+		}
+		$h .= '</div></div><div class="lap-base"><span></span></div></div>';
+		if ( $multi ) {
+			$h .= '<div class="lap-dots">';
+			foreach ( $slides as $i => $img ) {
+				$h .= '<' . $tag . ' class="lap-dot' . ( 0 === $i ? ' is-on' : '' ) . '" aria-label="Slide ' . ( $i + 1 ) . '"></' . $etag . '>';
+			}
+			$h .= '</div>';
+		}
+		return $h . '</div>';
+	}
+
+	/** Branding section: laptop cards with caption. */
+	public function design_laptop( $posts, $columns = 3 ) {
+		$h = '<div class="d-laptop cols-' . (int) $columns . '">';
+		foreach ( array_values( $posts ) as $p ) {
+			$id    = $p->ID;
+			$desc  = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
+			$n     = count( aswin_work_images( $id ) );
+			$label = implode( ' · ', array_filter( array( get_post_meta( $id, '_aswin_role', true ), $this->meta_line( $id ) ) ) );
+			$h    .= '<a class="psc-card lap-card reveal" href="' . esc_url( get_permalink( $id ) ) . '">' . $this->laptop_html( $p );
+			$h    .= '<div class="ds-cap">' . ( $label ? '<span class="ds-meta">' . esc_html( $label ) . '</span>' : '' ) . '<h3>' . esc_html( get_the_title( $id ) ) . '</h3>' . ( $desc ? '<p>' . esc_html( $desc ) . '</p>' : '' ) . '<span class="ds-link">' . ( $n > 1 ? 'View ' . $n . ' slides' : 'View work' ) . ' <span aria-hidden="true">→</span></span></div></a>';
+		}
+		return $h . '</div>';
+	}
+
 	/** Social media section: phone-scene cards with caption. */
 	public function design_scene( $posts, $columns = 3 ) {
 		$h = '<div class="d-scene cols-' . (int) $columns . '">';
@@ -398,6 +453,8 @@ class Aswin_Render {
 			'design'       => 'cards',
 		) );
 		switch ( $o['design'] ) {
+			case 'laptop':
+				return $this->design_laptop( $posts, $o['columns'] );
 			case 'scene':
 				return $this->design_scene( $posts, $o['columns'] );
 			case 'showcase':

@@ -53,7 +53,12 @@ while ( have_posts() ) :
 			<?php endif; ?>
 		</header>
 
-		<?php if ( 'scene' === $style ) : ?>
+		<?php if ( 'laptop' === $style ) : ?>
+			<div class="wrap work-scene reveal"><?php echo $r->laptop_html( get_post(), true ); // phpcs:ignore ?></div>
+			<?php if ( trim( get_the_content() ) ) : ?>
+				<div class="wrap"><div class="entry reveal"><?php the_content(); ?></div></div>
+			<?php endif; ?>
+		<?php elseif ( 'scene' === $style ) : ?>
 			<div class="wrap work-scene reveal"><?php echo $r->scene_html( get_post(), true ); // phpcs:ignore ?></div>
 			<?php if ( trim( get_the_content() ) ) : ?>
 				<div class="wrap"><div class="entry reveal"><?php the_content(); ?></div></div>
@@ -74,7 +79,7 @@ while ( have_posts() ) :
 
 		<?php
 		// Gallery: for phone works show every image; otherwise skip the cover already shown above.
-		$gallery = in_array( $style, array( 'phone', 'scene' ), true ) ? $images : array_slice( $images, ( has_post_thumbnail() && ! $has_vid ) ? 1 : 0 );
+		$gallery = in_array( $style, array( 'phone', 'scene', 'laptop' ), true ) ? $images : array_slice( $images, ( has_post_thumbnail() && ! $has_vid ) ? 1 : 0 );
 		if ( $gallery ) :
 			?>
 			<section class="wrap work-gallery" aria-label="Images">
