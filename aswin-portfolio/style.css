@@ -1047,3 +1047,11 @@ body .e-con.section.page-body { --padding-top: 0; }
 }
 
 .d-feature .df-item.is-board .df-media.df-board { z-index: 0; isolation: isolate; }
+
+/* Image-only work page */
+.img-only { padding: 110px 0 clamp(60px, 8vw, 100px); }
+.img-only .crumbs { margin-bottom: 20px; }
+.img-only-frame { display: block; border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 1px var(--line), 0 40px 80px -50px rgba(21, 20, 18, .5); cursor: zoom-in; }
+.img-only-frame img { display: block; width: 100%; height: auto; }
+.img-only-back { margin: 30px 0 0; text-align: center; }
+@media (max-width: 767px) { .img-only { padding-top: 90px; } .img-only-frame { border-radius: 10px; } }

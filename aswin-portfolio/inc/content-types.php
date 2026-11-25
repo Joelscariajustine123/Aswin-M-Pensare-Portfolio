@@ -232,6 +232,7 @@ function aswin_work_fields() {
 		'_aswin_videos'     => 'ids',
 		'_aswin_feature_videos' => 'ids',
 		'_aswin_tagline'    => 'text',
+		'_aswin_image_only' => 'bool',
 		'_aswin_headline'   => 'text',
 		'_aswin_series_label' => 'text',
 		'_aswin_films_label'  => 'text',
@@ -319,6 +320,7 @@ function aswin_work_details_box( $post ) {
 	echo '</select><p class="description">Shown on the work page, and the work appears on that brand’s page. <a href="' . esc_url( admin_url( 'post-new.php?post_type=aswin_brand' ) ) . '" target="_blank">Add a brand</a></p></div>';
 	echo '<div class="aswin-field"><label for="_aswin_year">Year</label><input type="text" class="widefat" name="_aswin_year" id="_aswin_year" placeholder="2024" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_year', true ) ) . '"></div>';
 	echo '<div class="aswin-field"><label for="_aswin_role">My role</label><input type="text" class="widefat" name="_aswin_role" id="_aswin_role" placeholder="Copy, concept" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_role', true ) ) . '"></div>';
+	echo '<div class="aswin-field"><label class="aswin-inline"><input type="checkbox" name="_aswin_image_only" value="1"' . checked( get_post_meta( $post->ID, '_aswin_image_only', true ), '1', false ) . '> <strong>Image only</strong></label><p class="description">The work page shows just the cover image (e.g. a finished campaign board).</p></div>';
 	echo '<div class="aswin-field"><label for="_aswin_tagline">Campaign line (optional)</label><input type="text" class="widefat" name="_aswin_tagline" id="_aswin_tagline" placeholder="The Way of Ayurveda" value="' . esc_attr( get_post_meta( $post->ID, '_aswin_tagline', true ) ) . '"><p class="description">When set, the work page becomes a campaign showcase board and the card shows its preview.</p></div>';
 	foreach ( array(
 		'_aswin_headline'     => array( 'Showcase headline', 'National Ayurveda Day 2026', 'Big green title on the board. Empty = campaign line.' ),

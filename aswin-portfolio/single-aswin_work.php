@@ -23,6 +23,28 @@ while ( have_posts() ) :
 	$images  = aswin_work_images( $id );
 	$back    = $cat ? aswin_section_url( $cat ) : get_post_type_archive_link( 'aswin_work' );
 	$has_vid = (bool) get_post_meta( $id, '_aswin_video', true );
+
+	// "Image only" works: the page is just the image.
+	if ( get_post_meta( $id, '_aswin_image_only', true ) && has_post_thumbnail() ) {
+		$full = wp_get_attachment_image_url( get_post_thumbnail_id(), 'full' );
+		?>
+		<article class="work-single img-only">
+			<div class="wrap">
+				<nav class="crumbs" aria-label="Breadcrumb">
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a><span>/</span>
+					<a href="<?php echo esc_url( get_post_type_archive_link( 'aswin_work' ) ); ?>">Work</a>
+					<?php if ( $cat ) : ?><span>/</span><a href="<?php echo esc_url( $back ); ?>"><?php echo esc_html( $cat->name ); ?></a><?php endif; ?>
+				</nav>
+				<h1 class="screen-reader-text"><?php the_title(); ?></h1>
+				<a class="img-only-frame" href="<?php echo esc_url( $full ); ?>" data-elementor-open-lightbox="yes" data-elementor-lightbox-title="<?php echo esc_attr( get_the_title() ); ?>">
+					<?php the_post_thumbnail( 'full', array( 'loading' => 'eager' ) ); ?>
+				</a>
+				<p class="img-only-back"><a class="btn ghost" href="<?php echo esc_url( $back ); ?>">← Back to <?php echo esc_html( $cat ? $cat->name : 'work' ); ?></a></p>
+			</div>
+		</article>
+		<?php
+		continue;
+	}
 	?>
 	<article class="work-single style-<?php echo esc_attr( $style ); ?>">
 		<?php if ( get_post_meta( $id, '_aswin_tagline', true ) ) : ?>
