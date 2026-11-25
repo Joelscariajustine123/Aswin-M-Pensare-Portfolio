@@ -1055,3 +1055,25 @@ body .e-con.section.page-body { --padding-top: 0; }
 .img-only-frame img { display: block; width: 100%; height: auto; }
 .img-only-back { margin: 30px 0 0; text-align: center; }
 @media (max-width: 767px) { .img-only { padding-top: 90px; } .img-only-frame { border-radius: 10px; } }
+
+/* Campaign cards: all the same size */
+.d-feature { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: auto; }
+.d-feature .df-item, .d-feature .df-item:first-child { grid-column: auto; grid-row: auto; aspect-ratio: 4 / 3; }
+.d-feature .df-item:first-child .df-cap h3, .d-feature .df-item.is-board:first-child .df-cap h3 { font-size: clamp(20px, 2vw, 28px); }
+.d-feature .df-item:first-child .df-cap p { display: none; }
+.d-feature .df-item:first-child .df-show .df-fg { inset: 6% 6% 30% 6%; width: 88%; height: 64%; }
+@media (max-width: 1024px) { .d-feature { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+	.d-feature { grid-template-columns: 1fr; }
+	.d-feature .df-item, .d-feature .df-item:first-child, .d-feature .df-item.is-board, .d-feature .df-item.is-board:first-child { grid-row: auto; aspect-ratio: 4 / 3; }
+}
+
+/* Campaign cards: explicit row heights below desktop (aspect-ratio collapses inside Elementor flex sizing) */
+@media (max-width: 1024px) {
+	.d-feature { grid-auto-rows: calc((100vw - 2 * var(--gutter) - 24px) / 2 * .75); }
+	.d-feature .df-item, .d-feature .df-item:first-child { aspect-ratio: auto; }
+}
+@media (max-width: 767px) {
+	.d-feature { grid-auto-rows: calc((100vw - 2 * var(--gutter)) * .75); }
+}
+
