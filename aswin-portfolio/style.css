@@ -1135,3 +1135,20 @@ body .e-con.section.page-body { --padding-top: 0; }
 .collage.is-polaroid .ph-print { padding-top: 16px; }
 .contact-photo { padding-top: 14px; }
 .contact-photo img { aspect-ratio: 3 / 4; object-position: center top; }
+
+/* Contact photo at 300% (≈450px desktop): own column beside the text */
+.contact-photo { width: min(330px, 80vw); padding: 14px 14px 16px; margin: 0 auto 30px; }
+@media (min-width: 1025px) {
+	.contact-inner { display: grid; grid-template-columns: minmax(0, 1fr) clamp(330px, 30vw, 450px); column-gap: clamp(32px, 4vw, 64px); align-items: start; }
+	.contact-inner > * { grid-column: 1; }
+	.contact-inner > .contact-photo { position: static; grid-column: 2; grid-row: 1 / span 20; align-self: center; width: 100%; margin: 0; padding: 18px 18px 22px; transform: rotate(4deg); }
+	.contact-inner > .contact-photo:hover { transform: rotate(0) scale(1.03); }
+}
+
+@media (max-width: 1024px) { .contact-photo { width: min(290px, 76vw); margin: 10px auto 44px; } }
+
+@media (max-width: 1024px) { .contact-inner > .contact-photo { margin: 10px auto 44px !important; } }
+
+/* Contact photo at 80% of previous size */
+@media (min-width: 1025px) { .contact-inner { grid-template-columns: minmax(0, 1fr) clamp(264px, 24vw, 360px); } }
+@media (max-width: 1024px) { .contact-inner > .contact-photo { width: min(232px, 61vw); } }
