@@ -1077,3 +1077,61 @@ body .e-con.section.page-body { --padding-top: 0; }
 	.d-feature { grid-auto-rows: calc((100vw - 2 * var(--gutter)) * .75); }
 }
 
+
+/* ---------- Video films (Concept, scripting & direction) ---------- */
+.d-video { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 2.4vw, 32px); align-items: stretch; }
+.d-video.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vd-thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #111; }
+.vd-bg { position: absolute; inset: -20px; background-size: cover; background-position: center; filter: blur(18px) brightness(.55); }
+.vd-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: transform .5s ease; }
+.vd-card:hover .vd-thumb img { transform: scale(1.03); }
+.vd-play { position: absolute; left: 50%; top: 50%; z-index: 2; width: 74px; height: 74px; margin: -37px 0 0 -37px; display: grid; place-items: center; border-radius: 50%; background: var(--sun); box-shadow: 0 0 0 0 rgba(255, 201, 60, .6); animation: dfPulse 2.2s ease-out infinite; cursor: pointer; transition: transform .25s; }
+.vd-play i { width: 0; height: 0; margin-left: 6px; border-left: 20px solid var(--ink); border-top: 12px solid transparent; border-bottom: 12px solid transparent; }
+.vd-play:hover { transform: scale(1.1); }
+.vd-time { position: absolute; right: 12px; bottom: 12px; z-index: 2; padding: 4px 9px; border-radius: 6px; background: rgba(0, 0, 0, .7); color: #fff; font-size: 13px; font-weight: 600; }
+/* work page player: own shape, never taller than the screen */
+.vd-player { margin: 0 auto; width: min(100%, calc((100vh - 140px) * (var(--vd-ratio)))); border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px var(--line), 0 30px 60px -36px rgba(21, 20, 18, .55); }
+.vd-player video { display: block; width: 100%; height: auto; aspect-ratio: var(--vd-ratio); background: #000; }
+.vd-player.is-vertical { max-width: 460px; }
+@media (max-width: 1024px) { .d-video.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+	.d-video, .d-video[class*="cols-"] { grid-template-columns: 1fr; }
+	.vd-play { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
+	.vd-player { width: 100%; border-radius: 12px; }
+}
+
+/* Films in 9:16 (vertical) frames everywhere */
+.d-video, .d-video.cols-2, .d-video.cols-3 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.vd-thumb { aspect-ratio: 9 / 16; }
+.vd-thumb img { object-fit: contain; }
+.vd-player, .vd-player.is-vertical { --vd-ratio: 9 / 16; width: min(100%, calc((100vh - 140px) * 9 / 16), 460px); max-width: none; }
+.vd-player video { aspect-ratio: 9 / 16; object-fit: contain; }
+.cb-modal video { aspect-ratio: 9 / 16; height: min(88vh, 92vw * 16 / 9); width: auto; max-width: 92vw; object-fit: contain; }
+@media (max-width: 1024px) { .d-video, .d-video[class*="cols-"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+	.d-video, .d-video[class*="cols-"] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+	.vd-card .ds-cap { padding: 14px 14px 16px; }
+	.vd-card .ds-cap h3 { font-size: 16px; }
+	.vd-card .ds-cap p { display: none; }
+	.vd-card .ds-meta { font-size: 10px; }
+	.vd-play { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
+	.vd-play i { border-left-width: 15px; border-top-width: 9px; border-bottom-width: 9px; margin-left: 4px; }
+	.vd-player, .vd-player.is-vertical { width: min(100%, calc((100vh - 120px) * 9 / 16)); }
+}
+
+/* Contact: small polaroid photo */
+.contact-photo { width: clamp(110px, 12vw, 150px); margin: 0 auto 22px; padding: 8px 8px 10px; background: #fff; border-radius: 4px; transform: rotate(-5deg); box-shadow: 0 14px 30px -14px rgba(0, 0, 0, .5); transition: transform .35s ease; }
+.contact-photo:hover { transform: rotate(0) scale(1.06); }
+.contact-photo img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: top center; border-radius: 2px; }
+.contact-photo figcaption { margin-top: 7px; font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.1; color: var(--ink); text-align: center; }
+@media (min-width: 1025px) {
+	.contact-inner { position: relative; }
+	.contact-photo { position: absolute; right: 4%; top: 0; margin: 0; transform: rotate(6deg); }
+	.contact-photo:hover { transform: rotate(0) scale(1.06); }
+}
+
+/* Headroom: keep heads inside the frame (About collage + contact polaroid) */
+.collage .ph-print img { object-position: center top; }
+.collage.is-polaroid .ph-print { padding-top: 16px; }
+.contact-photo { padding-top: 14px; }
+.contact-photo img { aspect-ratio: 3 / 4; object-position: center top; }

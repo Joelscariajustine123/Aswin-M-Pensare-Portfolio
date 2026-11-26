@@ -599,6 +599,8 @@ class Aswin_Contact_Widget extends Aswin_Widget {
 	protected function register_controls() {
 		$this->start_controls_section( 'content', array( 'label' => 'Content' ) );
 		$this->chapter_controls( '09', 'The last word' );
+		$this->add_control( 'photo', array( 'label' => 'Small photo (optional)', 'type' => Controls_Manager::MEDIA, 'default' => array( 'url' => '' ) ) );
+		$this->add_control( 'photo_caption', array( 'label' => 'Photo caption', 'type' => Controls_Manager::TEXT, 'default' => '' ) );
 		$this->add_control( 'title', array( 'label' => 'Heading', 'type' => Controls_Manager::TEXTAREA, 'rows' => 2, 'default' => 'Got a story? *Let’s tell it.*' ) );
 		$this->add_control( 'text', array( 'label' => 'Text', 'type' => Controls_Manager::TEXTAREA, 'default' => 'Every idea has a story worth telling. If you’ve got one that needs the right words, I’d love to hear it.' ) );
 		$r = new Repeater();
@@ -633,6 +635,9 @@ class Aswin_Contact_Widget extends Aswin_Widget {
 		$s = $this->get_settings_for_display();
 		?>
 		<div class="contact-inner">
+			<?php if ( ! empty( $s['photo']['url'] ) ) : ?>
+				<figure class="contact-photo"><?php echo ! empty( $s['photo']['id'] ) ? wp_get_attachment_image( (int) $s['photo']['id'], 'medium', false, array( 'loading' => 'lazy', 'alt' => 'Aswin M' ) ) : '<img src="' . esc_url( $s['photo']['url'] ) . '" alt="Aswin M" loading="lazy">'; ?><?php if ( ! empty( $s['photo_caption'] ) ) : ?><figcaption><?php echo esc_html( $s['photo_caption'] ); ?></figcaption><?php endif; ?></figure>
+			<?php endif; ?>
 			<?php echo $this->chapter( $s['chapter_num'], $s['chapter_label'] ); ?>
 			<h2 class="contact-title reveal"><?php echo $this->em( $s['title'] ); ?></h2>
 			<?php if ( $s['text'] ) : ?><p class="contact-text reveal"><?php echo esc_html( $s['text'] ); ?></p><?php endif; ?>

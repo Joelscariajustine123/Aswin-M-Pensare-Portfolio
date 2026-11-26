@@ -78,7 +78,12 @@ while ( have_posts() ) :
 			<?php endif; ?>
 		</header>
 
-		<?php if ( 'laptop' === $style ) : ?>
+		<?php if ( 'video' === $style && $r->film_info( $id ) ) : ?>
+			<div class="wrap work-scene reveal"><?php echo $r->film_player( $id ); // phpcs:ignore ?></div>
+			<?php if ( trim( get_the_content() ) ) : ?>
+				<div class="wrap"><div class="entry reveal"><?php the_content(); ?></div></div>
+			<?php endif; ?>
+		<?php elseif ( 'laptop' === $style ) : ?>
 			<div class="wrap work-scene reveal"><?php echo $r->laptop_html( get_post(), true ); // phpcs:ignore ?></div>
 			<?php if ( trim( get_the_content() ) ) : ?>
 				<div class="wrap"><div class="entry reveal"><?php the_content(); ?></div></div>
@@ -118,7 +123,10 @@ while ( have_posts() ) :
 
 		<?php
 		// Campaign videos ("The films").
-		$films = array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_videos', true ) ) ) );
+		$films = array_values( array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_videos', true ) ) ) ) );
+		if ( 'video' === $style ) {
+			$films = array_slice( $films, 1 ); // the first film is already in the big player
+		}
 		if ( $films ) :
 			?>
 			<section class="wrap work-films" aria-label="Videos">

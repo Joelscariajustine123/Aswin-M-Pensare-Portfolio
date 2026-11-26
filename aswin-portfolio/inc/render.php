@@ -11,6 +11,9 @@ function aswin_work_style( $post_id ) {
 	foreach ( (array) wp_get_post_terms( $post_id, 'aswin_work_cat' ) as $t ) {
 		$styles[] = get_term_meta( $t->term_id, 'aswin_style', true );
 	}
+	if ( in_array( 'video', $styles, true ) ) {
+		return 'video';
+	}
 	if ( in_array( 'laptop', $styles, true ) ) {
 		return 'laptop';
 	}
@@ -25,6 +28,7 @@ function aswin_designs() {
 	return array(
 		'card'      => 'Cards (image grid)',
 		'phone'     => 'Phone mockups (Instagram / social)',
+		'video'     => 'Video films (poster + player)',
 		'laptop'    => 'Laptop screen (decks / brand guidelines)',
 		'scene'     => 'Phone scene (phone + side posts mockup)',
 		'showcase'  => 'Showcase cards (full image + caption)',
@@ -41,7 +45,7 @@ function aswin_design_for( $terms ) {
 		return 'cards';
 	}
 	$s = get_term_meta( $terms[0]->term_id, 'aswin_style', true );
-	return in_array( $s, array( 'laptop', 'scene', 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
+	return in_array( $s, array( 'video', 'laptop', 'scene', 'showcase', 'list', 'feature', 'newsprint', 'case' ), true ) ? $s : 'cards';
 }
 
 /** URL of a category's section page (Elementor page if linked, else category archive). */
@@ -307,6 +311,61 @@ class Aswin_Render {
 				$h .= '<' . $tag . ' class="lap-dot' . ( 0 === $i ? ' is-on' : '' ) . '" aria-label="Slide ' . ( $i + 1 ) . '"></' . $etag . '>';
 			}
 			$h .= '</div>';
+		}
+		return $h . '</div>';
+	}
+
+	/** First film of a work: [attachment id, url, poster url, width, height, seconds]. */
+	public function film_info( $id, $size = 'large' ) {
+		$films = array_filter( array_map( 'intval', explode( ',', (string) get_post_meta( $id, '_aswin_videos', true ) ) ) );
+		$v     = $films ? (int) reset( $films ) : (int) get_post_meta( $id, '_aswin_video', true ); // fall back to the single "Video" field
+		if ( ! $v || ! ( $url = wp_get_attachment_url( $v ) ) ) {
+			return null;
+		}
+		$meta   = wp_get_attachment_metadata( $v );
+		$poster = (int) get_post_meta( $v, '_aswin_poster', true );
+		$poster = $poster ? $poster : (int) get_post_thumbnail_id( $id );
+		return array(
+			'id'     => $v,
+			'url'    => $url,
+			'poster' => $poster ? wp_get_attachment_image_url( $poster, $size ) : '',
+			'w'      => (int) ( $meta['width'] ?? 16 ),
+			'h'      => (int) ( $meta['height'] ?? 9 ),
+			'secs'   => (int) ( $meta['length'] ?? 0 ),
+		);
+	}
+
+	/** Large responsive player for the work page (keeps the film's own shape, fits the screen). */
+	public function film_player( $id ) {
+		$f = $this->film_info( $id, 'full' );
+		if ( ! $f ) {
+			return '';
+		}
+		$ratio = $f['w'] && $f['h'] ? $f['w'] . ' / ' . $f['h'] : '16 / 9';
+		return '<div class="vd-player' . ( $f['h'] > $f['w'] ? ' is-vertical' : '' ) . '" style="--vd-ratio:' . esc_attr( $ratio ) . '">'
+			. '<video src="' . esc_url( $f['url'] ) . '"' . ( $f['poster'] ? ' poster="' . esc_url( $f['poster'] ) . '"' : '' ) . ' controls playsinline preload="metadata"></video></div>';
+	}
+
+	/** Concept / scripting / direction section: film cards. */
+	public function design_video( $posts, $columns = 3 ) {
+		$h = '<div class="d-video cols-' . (int) $columns . '">';
+		foreach ( array_values( $posts ) as $p ) {
+			$id    = $p->ID;
+			$f     = $this->film_info( $id );
+			$desc  = has_excerpt( $id ) ? get_the_excerpt( $id ) : '';
+			$label = implode( ' · ', array_filter( array( get_post_meta( $id, '_aswin_role', true ), $this->meta_line( $id ) ) ) );
+			$poster = $f && $f['poster'] ? $f['poster'] : ( has_post_thumbnail( $id ) ? get_the_post_thumbnail_url( $id, 'large' ) : '' );
+			$h    .= '<a class="psc-card vd-card reveal" href="' . esc_url( get_permalink( $id ) ) . '"><div class="vd-thumb">';
+			if ( $poster ) {
+				$h .= '<span class="vd-bg" style="background-image:url(' . esc_url( $poster ) . ')"></span><img src="' . esc_url( $poster ) . '" alt="" loading="lazy">';
+			}
+			if ( $f ) {
+				$h .= '<span class="cb-reel vd-play" role="button" tabindex="0" data-video="' . esc_url( $f['url'] ) . '" aria-label="Play: ' . esc_attr( get_the_title( $id ) ) . '"><i></i></span>';
+				if ( $f['secs'] ) {
+					$h .= '<span class="vd-time">' . esc_html( floor( $f['secs'] / 60 ) . ':' . str_pad( (string) ( $f['secs'] % 60 ), 2, '0', STR_PAD_LEFT ) ) . '</span>';
+				}
+			}
+			$h .= '</div><div class="ds-cap">' . ( $label ? '<span class="ds-meta">' . esc_html( $label ) . '</span>' : '' ) . '<h3>' . esc_html( get_the_title( $id ) ) . '</h3>' . ( $desc ? '<p>' . esc_html( $desc ) . '</p>' : '' ) . '<span class="ds-link">Watch &amp; read <span aria-hidden="true">→</span></span></div></a>';
 		}
 		return $h . '</div>';
 	}
@@ -596,6 +655,8 @@ class Aswin_Render {
 			'design'       => 'cards',
 		) );
 		switch ( $o['design'] ) {
+			case 'video':
+				return $this->design_video( $posts, $o['columns'] );
 			case 'laptop':
 				return $this->design_laptop( $posts, $o['columns'] );
 			case 'scene':
